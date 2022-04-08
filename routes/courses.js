@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router()
-const app = express()
 const coursesController  = require('../controllers/courses.controller')
 const {verifyToken} = require('../middleware/auth')
 

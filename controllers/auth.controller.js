@@ -5,28 +5,23 @@ const app = express();
 const User = require("../models/UserModel");
 const { mailSender } = require("../utils/sendMail");
 const { hashPassword } = require("../utils/passwordHashing");
+const errorHandling = require('../middleware/errorHandling')
 require("dotenv").config();
 app.use(express.json());
 
-exports.signup = async function (req, res, next) {
+exports.signup = errorHandling( async function (req, res) {
   let createUser = new User({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
   });
-
-  try {
     createUser.password = await hashPassword(req.body.password);
     const result = await createUser.save();
     res.send(result);
-  } catch (err) {
-    next(err);
-    console.log("Error Occured. Please Check Your Input Values " + err);
   }
-};
+);
 
-exports.login = async function (req, res, next) {
-  try {
+exports.login = errorHandling( async function (req, res) {
     let user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(404).send("Invalid email");
 
@@ -43,12 +38,10 @@ exports.login = async function (req, res, next) {
         token,
       });
     });
-  } catch (err) {
-    next(err);
-  }
-};
+  
+});
 
-exports.changePassword = async function (req, res) {
+exports.changePassword = errorHandling( async function (req, res) {
   const oldPassword = req.body.currentPassword;
   const newPassword = req.body.newPassword;
 
@@ -70,10 +63,9 @@ exports.changePassword = async function (req, res) {
   } else {
     res.send("Current Password is incorrect ");
   }
-};
+});
 
-exports.forgotPassword = async function (req, res, next) {
-  try {
+exports.forgotPassword = errorHandling( async function (req, res) {
     let user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(404).send("Invalid email");
     const token = jwt.sign({ id: user._id.valueOf() }, process.env.SECRET_KEY, {
@@ -85,14 +77,10 @@ exports.forgotPassword = async function (req, res, next) {
     await user.save();
 
     res.send("Password Reset Link Sent To Email.\n Token=" + token);
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
+ 
+});
 
-exports.resetPassword = async function (req, res) {
-  try {
+exports.resetPassword = errorHandling( async function (req, res) {
     jwt.verify(
       req.body.token,
       process.env.SECRET_KEY,
@@ -119,7 +107,4 @@ exports.resetPassword = async function (req, res) {
         }
       }
     );
-  } catch (err) {
-    res.send(err);
-  }
-};
+});

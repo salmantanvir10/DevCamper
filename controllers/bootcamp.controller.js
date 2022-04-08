@@ -1,10 +1,11 @@
 const userSchema = require("../models/bootcampModel");
 const {customMiddleware} = require('../middleware/customMiddleware')
+const errorHandling = require('../middleware/errorHandling')
 
 
 
 //functions to respond bootcamp endpoints
-exports.index = async function(req,res,next){
+exports.index = errorHandling(  async function(req,res,next){
   let pathToPopulate="";
 
   let result = await customMiddleware(
@@ -17,42 +18,37 @@ exports.index = async function(req,res,next){
   );
 
   res.send(result);
-}
+})
 
-exports.read = async function (req, res,next) {
-  const getUser = await userSchema.findOne({ _id: req.params.id }).clone().catch(next);
+exports.read = errorHandling( async function (req, res) {
+  const getUser = await userSchema.findOne({ _id: req.params.id });
     if(getUser==undefined ||getUser==null){
-     return next("user not found");   
+     return res.send("user not found");   
     }else{
     res.send(getUser);
     }
   
-};
+});
   
-exports.create = async function (req, res,next) {
+exports.create = errorHandling( async function (req, res) {
   let users = new userSchema({
     name: req.body.name,
     city: req.body.city,
     user: req._id
-  });
-  try {  
+  }); 
     const result = await users.save();
-    res.send(result);
+    res.send(result); 
+})
 
-  } catch (err) {
-    next(err);
-    console.log("Error Occured. Please Check Your Input Values "+err );
-  }
-}
-exports.update = async function (req, res,next) {
+exports.update = errorHandling( async function (req, res) {
  
-  const getUser = await userSchema.findOne({ _id: req.params.id }).clone().catch(next);
+  const getUser = await userSchema.findOne({ _id: req.params.id });
   if (getUser.user.valueOf()!== req._id){
     console.log("User not validated");
-     return next("User Not Validated")
+     return res.send("User Not Validated")
   }
   if(getUser==undefined ||getUser==null){
-   return next("User not found");   
+   return req.send("User not found");   
   }
   
   else{
@@ -62,39 +58,38 @@ exports.update = async function (req, res,next) {
       (err, doc) => {
         if (err) {
           console.log("Something wrong when updating data!");
-          return next(err);   
+          return res.send(err);   
         } else {
           res.send("City Updated");
         }
       }
-    ).clone().catch(next)
+    )
   }
 
-};
+});
 
-exports.delete = async function (req, res,next) {
-
-  const getUser = await userSchema.findOne({ _id: req.params.id }).clone().catch(next);
+exports.delete = errorHandling( async function (req, res) {
+  const getUser = await userSchema.findOne({ _id: req.params.id });
 
   if (getUser.user.valueOf()!== req._id){
     console.log("User not validated for deleting");
-     return next("User not validated")
+     return res.send("User not validated")
   }
   if(getUser==undefined ||getUser==null){
-   return next("User not found");   
+   return res.send("User not found");   
   }
 
   else{
     userSchema.deleteOne({ _id: req.params.id }, function (err, obj) {
       if (err){
          console.log("Error while deleting bootcamp")
-         return next()
+         return res.send("Error while deleting")
       }
       else{
       res.send("Bootcamp deleted");
       }
       
-    }).clone().catch(next);
+    })
   }
 
-}
+})

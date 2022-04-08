@@ -1,11 +1,11 @@
 const courses = require("../models/CoursesModel");
 const bootcamp = require("../models/bootcampModel");
-const express = require("express");
 const { customMiddleware } = require("../middleware/customMiddleware");
+const errorHandling = require('../middleware/errorHandling')
 
 //endpoint functions
 
-exports.index = async function (req, res, next) {
+exports.index = errorHandling( async function (req, res, next) {
   let pathToPopulate = "bootcamp"; //this is path for populate method
   let result = await customMiddleware(
     courses,
@@ -17,23 +17,20 @@ exports.index = async function (req, res, next) {
   );
 
   res.send(result);
-};
+})
 
-exports.read = async function (req, res, next) {
+exports.read = errorHandling( async function (req, res) {
   const getUser = await courses
     .findOne({ bootcamp: req.params.id, courseID: req.params.courseId })
     .populate({ path: "bootcamp", options: { strictPopulate: false } })
-    .clone()
-    .catch(next);
   if (getUser == undefined || getUser == null) {
-    return next("user not found");
+    return res.send("user not found");
   } else {
     res.send(getUser);
   }
-};
+});
 
-exports.create = async function (req, res, next) {
-  try {
+exports.create = errorHandling( async function (req, res) {
     let userCourses = new courses({
       courseID: req.body.courseID,
       teacherName: req.body.teacherName,
@@ -48,24 +45,19 @@ exports.create = async function (req, res, next) {
       const result = await userCourses.save();
       res.send(result);
     }
-  } catch (err) {
-    next(err);
-    console.log("Error Occured. Please Check Your Input Values " + err);
-  }
-};
+
+});
 //update
-exports.update = async function (req, res, next) {
+exports.update = errorHandling( async function (req, res) {
   const getUser = await courses
     .findOne({ bootcamp: req.params.id, _id: req.params.courseId })
-    .clone()
-    .catch(next);
   console.log("===> " + getUser);
 
   if (getUser == undefined || getUser == null) {
-    return next("Course not found");
+    return res.send("Course not found");
   } else if (getUser.user.valueOf() !== req._id) {
     console.log("User not validated..");
-    return next("User Not Validated");
+    return res.send("User Not Validated");
   } else {
     courses
       .findOneAndUpdate(
@@ -74,29 +66,23 @@ exports.update = async function (req, res, next) {
         (err, doc) => {
           if (err) {
             console.log("Something wrong when updating data!");
-            return next(err);
+            return res.send(err);
           } else {
             res.send("CourseID Updated");
           }
         }
       )
-      .clone()
-      .catch(next);
   }
-};
+});
 
-exports.delete = async function (req, res, next) {
+exports.delete = errorHandling( async function (req, res) {
   const getUser = await courses
     .findOne({ bootcamp: req.params.id, _id: req.params.courseId })
-    .clone()
-    .catch(next);
-
   if (getUser == undefined || getUser == null) {
-    return next("User not found");
+    return res.send("User not found");
   } 
   else if (getUser.user.valueOf() !== req._id) {
-    console.log("User not validated");
-    return next("User Not Validated");
+    return res.send("User Not Validated");
   } else {
     courses
       .deleteOne(
@@ -104,13 +90,11 @@ exports.delete = async function (req, res, next) {
         function (err, obj) {
           if (err) {
             console.log("Error while deleting user");
-            return next();
+            return 
           } else {
             res.send("Course deleted");
           }
         }
       )
-      .clone()
-      .catch(next);
   }
-};
+});
