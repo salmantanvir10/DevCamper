@@ -3,19 +3,17 @@ const bootcamp = require("../models/bootcampModel");
 const express = require("express");
 const { customMiddleware } = require("../middleware/customMiddleware");
 
-
-//endpoints
+//endpoint functions
 
 exports.index = async function (req, res, next) {
-
- let pathToPopulate = "bootcamp"     //this is path for populate method
-  let result = await customMiddleware(       
+  let pathToPopulate = "bootcamp"; //this is path for populate method
+  let result = await customMiddleware(
     courses,
     { bootcamp: req.params.id },
     { creditHours: req.query.sortBy },
     req.query,
-    pathToPopulate,next
-    
+    pathToPopulate,
+    next
   );
 
   res.send(result);
@@ -41,7 +39,7 @@ exports.create = async function (req, res, next) {
       teacherName: req.body.teacherName,
       creditHours: req.body.creditHours,
       bootcamp: req.params.id,
-      user: req._id
+      user: req._id,
     });
     const findUser = await bootcamp.findById(req.params.id);
     if (findUser == null || findUser == undefined) {
@@ -61,15 +59,13 @@ exports.update = async function (req, res, next) {
     .findOne({ bootcamp: req.params.id, _id: req.params.courseId })
     .clone()
     .catch(next);
-    console.log("===> "+getUser);
-    if (getUser.user.valueOf()!== req._id){
-      console.log("User not validated..");
-       return next("User Not Validated")
-    }
-
+  console.log("===> " + getUser);
 
   if (getUser == undefined || getUser == null) {
-    return next("User not found");
+    return next("Course not found");
+  } else if (getUser.user.valueOf() !== req._id) {
+    console.log("User not validated..");
+    return next("User Not Validated");
   } else {
     courses
       .findOneAndUpdate(
@@ -91,20 +87,20 @@ exports.update = async function (req, res, next) {
 
 exports.delete = async function (req, res, next) {
   const getUser = await courses
-    .findOne({ bootcamp: req.params.id, courseID: req.params.courseId })
+    .findOne({ bootcamp: req.params.id, _id: req.params.courseId })
     .clone()
     .catch(next);
 
-    if (getUser.user.valueOf() !== req._id){
-      console.log("User not validated");
-       return next("User Not Validated")
-    }
   if (getUser == undefined || getUser == null) {
     return next("User not found");
+  } 
+  else if (getUser.user.valueOf() !== req._id) {
+    console.log("User not validated");
+    return next("User Not Validated");
   } else {
     courses
       .deleteOne(
-        { bootcamp: req.params.id, courseID: req.params.courseId },
+        { bootcamp: req.params.id, _id: req.params.courseId },
         function (err, obj) {
           if (err) {
             console.log("Error while deleting user");
