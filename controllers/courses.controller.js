@@ -21,7 +21,7 @@ exports.index = errorHandling( async function (req, res, next) {
 
 exports.read = errorHandling( async function (req, res) {
   const getUser = await courses
-    .findOne({ bootcamp: req.params.id, courseID: req.params.courseId })
+    .findOne({ bootcamp: req.params.id, _id: req.params.courseId })
     .populate({ path: "bootcamp", options: { strictPopulate: false } })
   if (getUser == undefined || getUser == null) {
     return res.send("user not found");
